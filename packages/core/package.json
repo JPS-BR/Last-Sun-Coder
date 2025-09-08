@@ -1,10 +1,21 @@
 {
-  "name": "@lsc/core",
-  "version": "0.0.1",
-  "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.json"
-  }
+    "name": "@lsc/core",
+    "version": "0.1.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsup src/index.ts --dts --format cjs"
+    },
+    "dependencies": {
+        "better-sqlite3": "^11.0.0",
+        "keytar": "^7.9.0",
+        "openai": "^4.58.0",
+        "typescript": "^5.6.3",
+        "zod": "^3.23.8"
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "^7.6.13",
+        "@types/node": "^24.3.1",
+        "tsup": "^8.1.0"
+    }
 }

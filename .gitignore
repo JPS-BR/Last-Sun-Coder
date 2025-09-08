@@ -1,7 +1,5 @@
 node_modules
 dist
-*.log
 .env
-*.sqlite
-dist/
-*.js.map
+.lastsun/
+*.db

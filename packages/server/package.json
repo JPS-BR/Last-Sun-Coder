@@ -9,7 +9,11 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@lsc/core": "workspace:*",
-    "@lsc/runner": "workspace:*"
+    "@lsc/core": "file:../core",
+    "@lsc/runner": "file:../runner"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "typescript": "^5.9.2"
   }
 }

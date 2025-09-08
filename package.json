@@ -1,39 +1,12 @@
 {
   "name": "last-sun-coder",
   "private": true,
-  "version": "0.0.1",
-  "workspaces": [
-    "packages/*"
-  ],
+  "version": "0.1.0",
+  "workspaces": ["packages/*"],
+  "engines": { "node": ">=20" },
   "scripts": {
-    "build": "pnpm -r build",
-    "dev": "pnpm -r build && pnpm --filter @lsc/cli run start",
-    "format": "prettier -w .",
-    "lint": "eslint ."
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.35.0",
-    "@mapbox/node-pre-gyp": "^2.0.0",
-    "@types/node": "^20.19.13",
-    "@typescript-eslint/eslint-plugin": "^8.42.0",
-    "@typescript-eslint/parser": "^8.42.0",
-    "eslint": "^9.35.0",
-    "prettier": "^3.6.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.2",
-    "typescript-eslint": "^8.42.0"
-  },
-  "dependencies": {
-    "@xenova/transformers": "^2.17.2",
-    "better-sqlite3": "^12.2.0",
-    "eventemitter3": "^5.0.1",
-    "fast-glob": "^3.3.3",
-    "fs-extra": "^11.3.1",
-    "hnswlib-node": "^3.0.0",
-    "openai": "^5.19.1",
-    "tree-sitter": "^0.21.1",
-    "tree-sitter-typescript": "^0.23.2",
-    "ts-morph": "^26.0.0",
-    "zod": "^3.25.76"
+    "build": "npm run -w @lsc/core build && npm run -w @lsc/cli build",
+    "dev": "npm run -w @lsc/cli dev"
   }
 }
+

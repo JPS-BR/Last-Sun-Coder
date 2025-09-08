@@ -8,6 +8,8 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@lsc/core": "workspace:*"
+    "@lsc/core": "file:../core"
   }
 }
+
+
