@@ -2,6 +2,7 @@ import ts from "typescript";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { DB } from "./DB.js";
+import { upsertFile, projectRoot } from "./ProjectRegistry.js";
 
 export type SymbolItem = {
   kind: "function" | "class" | "import";
@@ -17,9 +18,9 @@ export function parseTsJs(filePath: string): SymbolItem[] {
   const out: SymbolItem[] = [];
 
   function add(kind: SymbolItem["kind"], name: string, start: number, end: number, sig?: string) {
-    const { line: s } = source.getLineAndCharacterOfPosition(start);
-    const { line: e } = source.getLineAndCharacterOfPosition(end);
-    out.push({ kind, name, start_line: s + 1, end_line: e + 1, sig });
+    const s = source.getLineAndCharacterOfPosition(start).line + 1;
+    const e = source.getLineAndCharacterOfPosition(end).line + 1;
+    out.push({ kind, name, start_line: s, end_line: e, sig });
   }
 
   function visit(node: ts.Node) {
@@ -43,8 +44,11 @@ export function parseTsJs(filePath: string): SymbolItem[] {
 
 export function indexFile(db: DB, projectId: number, absPath: string): void {
   const ext = path.extname(absPath).toLowerCase();
-  const lang = ext === ".ts" || ext === ".tsx" ? "ts" : ext === ".js" || ext === ".jsx" ? "js" : "other";
-  const fileId = require("./ProjectRegistry.js").upsertFile(db, projectId, absPath, lang);
+  const lang = ext === ".ts" || ext === ".tsx" ? "ts"
+    : ext === ".js" || ext === ".jsx" ? "js"
+    : "other";
+
+  const fileId = upsertFile(db, projectId, absPath, lang);
 
   if (lang === "ts" || lang === "js") {
     const symbols = parseTsJs(absPath);
@@ -63,4 +67,11 @@ export function indexFile(db: DB, projectId: number, absPath: string): void {
       throw e;
     }
   }
+}
+
+export function indexRelativeFile(db: DB, projectId: number, relativePath: string): void {
+  const root = projectRoot(db, projectId);
+  const abs = path.resolve(root, relativePath);
+  if (!fs.existsSync(abs)) throw new Error("Arquivo não encontrado: " + relativePath);
+  indexFile(db, projectId, abs);
 }

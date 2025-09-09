@@ -1,12 +1,20 @@
-{
-  "name": "last-sun-coder",
-  "private": true,
-  "version": "0.1.0",
-  "workspaces": ["packages/*"],
-  "engines": { "node": ">=20" },
-  "scripts": {
-    "build": "npm run -w @lsc/core build && npm run -w @lsc/cli build",
-    "dev": "npm run -w @lsc/cli dev"
-  }
+﻿{
+    "name":  "last-sun-coder",
+    "private":  true,
+    "version":  "0.1.0",
+    "workspaces":  [
+                       "packages/*"
+                   ],
+    "engines":  {
+                    "node":  "\u003e=20"
+                },
+    "scripts":  {
+                    "build":  "node scripts/build-all.mjs",
+                    "dev":  "node packages/runner/dist/index.js --help"
+                },
+    "overrides":  {
+                      "tree-sitter":  "0.21.1",
+                      "tree-sitter-javascript":  "0.23.1",
+                      "tree-sitter-typescript":  "0.23.2"
+                  }
 }
-

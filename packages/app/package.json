@@ -10,9 +10,6 @@
   },
   "dependencies": {
     "@lsc/core": "file:../core",
-    "@lsc/server": "0.0.1"
+    "@lsc/server": "file:../server"
   }
 }
-
-
-

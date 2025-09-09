@@ -1,0 +1,82 @@
+﻿#!/usr/bin/env node
+import { Command } from "commander";
+import * as path from "node:path";
+import * as fs from "node:fs";
+import OpenAI from "openai";
+import { Secrets, Project, Symbols } from "@lsc/core";
+
+type SetupKeyOpts = { key: string };
+type InitOpts = { root: string; name?: string };
+type WLOpts = { root: string; paths: string };
+type IndexFileOpts = { root: string; file: string };
+
+const program = new Command();
+program.name("lsc").description("Last Sun Coder - CLI").version("0.1.0");
+
+program
+  .command("setup-key")
+  .description("Salva a OPENAI_API_KEY no cofre do SO")
+  .requiredOption("--key <key>", "API key da OpenAI")
+  .action(async (opts: SetupKeyOpts) => {
+    await Secrets.setOpenAIKey(opts.key);
+    console.log("OK: chave salva com segurança.");
+  });
+
+program
+  .command("init")
+  .description("Cria/abre projeto no diretório raiz e inicializa o banco local")
+  .requiredOption("--root <path>", "Diretório raiz do projeto")
+  .option("--name <name>", "Nome do projeto")
+  .action((opts: InitOpts) => {
+    const root = path.resolve(opts.root);
+    if (!fs.existsSync(root)) throw new Error("Diretório inexistente.");
+    const { db, project } = Project.openOrCreateProject(root, opts.name);
+    console.log(`Projeto: ${project.name}`);
+    console.log(`DB: ${db.filePath}`);
+    db.close();
+  });
+
+program
+  .command("whitelist")
+  .description("Define a whitelist de pastas (separadas por vírgula)")
+  .requiredOption("--root <path>", "Diretório raiz do projeto")
+  .requiredOption("--paths <csv>", "Ex.: src,packages,docs")
+  .action((opts: WLOpts) => {
+    const { db, project } = Project.openOrCreateProject(path.resolve(opts.root));
+    const arr = String(opts.paths).split(",").map(s => s.trim()).filter(Boolean);
+    Project.setWhitelist(db, project.id, arr);
+    db.close();
+    console.log("Whitelist atualizada:", arr.join(", "));
+  });
+
+program
+  .command("index-file")
+  .description("Indexa símbolos de um arquivo TS/JS")
+  .requiredOption("--root <path>", "Diretório raiz do projeto")
+  .requiredOption("--file <path>", "Caminho do arquivo absoluto ou relativo ao root")
+  .action((opts: IndexFileOpts) => {
+    const { db, project } = Project.openOrCreateProject(path.resolve(opts.root));
+    const abs = path.isAbsolute(opts.file) ? opts.file : path.join(Project.projectRoot(db, project.id), opts.file);
+    if (!fs.existsSync(abs)) throw new Error("Arquivo não encontrado.");
+    Symbols.indexFile(db, project.id, abs);
+    db.close();
+    console.log("Indexado:", abs);
+  });
+
+program
+  .command("models")
+  .description("Lista modelos disponíveis (via OpenAI SDK). Requer API key salva.")
+  .action(async () => {
+    const key = await Secrets.getOpenAIKey();
+    if (!key) throw new Error("API key não encontrada. Rode: lsc setup-key --key <KEY>");
+    const client = new OpenAI({ apiKey: key });
+    const models = await client.models.list();
+    console.log(models.data.map((m: { id: string }) => m.id).join("\n"));
+  });
+
+program.parseAsync().catch((e: unknown) => {
+  const msg = e instanceof Error ? e.message : String(e);
+  console.error(msg);
+  process.exit(1);
+});
+

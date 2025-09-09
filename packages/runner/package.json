@@ -2,14 +2,24 @@
   "name": "@lsc/runner",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "lsc": "dist/index.js"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@lsc/core": "file:../core"
+    "@lsc/core": "file:../core",
+    "commander": "^12.1.0",
+    "openai": "^4.104.0"
+  },
+  "devDependencies": {
+    "@types/form-data": "^2.5.0",
+    "@types/node": "^22.7.4",
+    "typescript": "^5.9.2",
+    "undici-types": "^6.19.8"
   }
 }
-
-

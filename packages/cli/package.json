@@ -1,21 +1,19 @@
 {
-    "name": "@lsc/cli",
-    "version": "0.1.0",
-    "bin": {
-        "lsc": "dist/index.js"
-    },
-    "scripts": {
-        "build": "tsup src/index.ts --dts --format cjs",
-        "dev": "tsup src/index.ts --watch"
-    },
-    "dependencies": {
-        "@lsc/core": "file:../core",
-        "commander": "^12.1.0",
-        "openai": "^4.58.0",
-        "typescript": "^5.6.3"
-    },
-    "devDependencies": {
-        "@types/node": "^24.3.1",
-        "tsup": "^8.1.0"
-    }
+  "name": "@lsc/cli-nobin",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm",
+    "dev": "tsup src/index.ts --watch"
+  },
+  "dependencies": {
+    "@lsc/core": "file:../core",
+    "commander": "^12.1.0",
+    "openai": "^4.104.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.13",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
 }

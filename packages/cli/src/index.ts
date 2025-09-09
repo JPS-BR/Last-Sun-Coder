@@ -3,7 +3,15 @@ import { Command } from "commander";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import OpenAI from "openai";
-import { Secrets, Project, DB, Symbols } from "@lsc/core";
+import { Secrets, Project, Symbols } from "@lsc/core";
+
+async function resolveApiKey(): Promise<string | null> {
+  const v = await Secrets.getOpenAIKey();
+  if (v && v.trim()) return v.trim();
+  const e = process.env.OPENAI_API_KEY;
+  if (e && e.trim()) return e.trim();
+  return null;
+}
 
 const program = new Command();
 program.name("lsc").description("Last Sun Coder - CLI (MVP Parte A)").version("0.1.0");
@@ -27,7 +35,7 @@ program
     if (!fs.existsSync(root)) throw new Error("Diretório inexistente.");
     const { db, project } = Project.openOrCreateProject(root, opts.name);
     console.log(`Projeto: ${project.name}`);
-    console.log(`DB: ${db.filePath}`);
+    console.log(`DB inicializado.`);
     db.close();
   });
 
@@ -38,10 +46,7 @@ program
   .requiredOption("--paths <csv>", "Ex.: src,packages,docs")
   .action((opts) => {
     const { db, project } = Project.openOrCreateProject(path.resolve(opts.root));
-    const arr = String(opts.paths)
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const arr = String(opts.paths).split(",").map((s) => s.trim()).filter(Boolean);
     Project.setWhitelist(db, project.id, arr);
     db.close();
     console.log("Whitelist atualizada:", arr.join(", "));
@@ -51,7 +56,7 @@ program
   .command("index-file")
   .description("Indexa símbolos de um arquivo TS/JS")
   .requiredOption("--root <path>", "Diretório raiz do projeto")
-  .requiredOption("--file <path>", "Caminho do arquivo absoluto ou relativo ao root")
+  .requiredOption("--file <path>", "Caminho do arquivo (abs ou relativo ao root)")
   .action((opts) => {
     const { db, project } = Project.openOrCreateProject(path.resolve(opts.root));
     const abs = path.isAbsolute(opts.file)
@@ -65,12 +70,16 @@ program
 
 program
   .command("models")
-  .description("Lista modelos disponíveis (via OpenAI SDK). Requer API key salva.")
+  .description("Lista modelos disponíveis (via OpenAI SDK). Requer API key (vault ou env).")
   .action(async () => {
-    const key = await Secrets.getOpenAIKey();
-    if (!key) throw new Error("API key não encontrada. Rode: lsc setup-key --key <KEY>");
+    const key = await resolveApiKey();
+    if (!key) {
+      console.error(
+        "API key não configurada.\nOpções:\n1) Defina OPENAI_API_KEY só nesta sessão\n2) Rode: lsc setup-key --key <KEY>"
+      );
+      process.exit(1);
+    }
     const client = new OpenAI({ apiKey: key });
-    // fallback para casos onde models.list não mostra tudo
     const models = await client.models.list();
     console.log(models.data.map((m) => m.id).join("\n"));
   });
