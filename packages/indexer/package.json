@@ -3,8 +3,12 @@
   "version": "0.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.json"
+  "scripts": 
+  {
+  "build": "tsc -p tsconfig.json",
+  "typecheck": "tsc -p tsconfig.json --noEmit",
+  "lint": "eslint . --ext .ts,.tsx,.js,.mjs",
+  "format": "prettier --check ."
   },
   "devDependencies": {
     "typescript": "^5.9.2"

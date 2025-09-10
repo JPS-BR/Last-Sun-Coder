@@ -8,8 +8,12 @@
   "bin": {
     "lsc": "dist/index.js"
   },
-  "scripts": {
-    "build": "tsc -p tsconfig.json"
+  "scripts": 
+  {
+  "build": "tsc -p tsconfig.json",
+  "typecheck": "tsc -p tsconfig.json --noEmit",
+  "lint": "eslint . --ext .ts,.tsx,.js,.mjs",
+  "format": "prettier --check ."
   },
   "dependencies": {
     "@lsc/core": "file:../core",

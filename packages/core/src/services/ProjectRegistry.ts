@@ -1,3 +1,4 @@
+import * as Migrator from "./Migrator";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { DB } from "./DB.js";
@@ -13,9 +14,53 @@ function projectDbPath(root: string): string {
 }
 
 export function ensureRoot(root: string): void {
-  if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
-    throw new Error(`Diretório raiz inválido: ${root}`);
+  const dir = path.join(root, ".lastsun");
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+function ensureProjectsTable(db: DB): void {
+  const cols: string[] =
+    db
+      .prepare<{ name: string }>("PRAGMA table_info(projects)")
+      .all()
+      .map((r: any) => r.name) || [];
+
+  if (cols.length === 0) {
+    db.exec(`
+CREATE TABLE IF NOT EXISTS projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  root TEXT NOT NULL UNIQUE,
+  name TEXT,
+  prefs_json TEXT,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_projects_root ON projects(root);
+    `);
+    return;
   }
+  if (!cols.includes("name")) db.prepare("ALTER TABLE projects ADD COLUMN name TEXT").run();
+  if (!cols.includes("prefs_json")) db.prepare("ALTER TABLE projects ADD COLUMN prefs_json TEXT").run();
+  db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS ux_projects_root ON projects(root)").run();
+}
+
+function ensureFilesTable(db: DB): void {
+  db.exec(`
+CREATE TABLE IF NOT EXISTS files (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_id INTEGER NOT NULL,
+  path TEXT NOT NULL,
+  lang TEXT,
+  hash TEXT,
+  size INTEGER,
+  mtime INTEGER,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+  UNIQUE(project_id, path),
+  FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS ix_files_proj ON files(project_id);
+`);
 }
 
 export function openOrCreateProject(root: string, name?: string): OpenProject {
@@ -23,57 +68,59 @@ export function openOrCreateProject(root: string, name?: string): OpenProject {
   const dbPath = projectDbPath(root);
   const db = new DB(dbPath);
   db.migrateBase();
+  ensureProjectsTable(db);
+  ensureFilesTable(db);
 
-  const row = db
-    .prepare<{ id: number }>("SELECT id FROM projects WHERE root = ?")
-    .get(root) as { id?: number } | undefined;
+  const normRoot = path.resolve(root).replace(/\\/g, "/");
+  let row = db
+    .prepare<ProjectRow>("SELECT id, root, name, prefs_json FROM projects WHERE root = ?")
+    .get(normRoot) as ProjectRow | undefined;
 
-  let project: ProjectRow | undefined;
-
-  if (!row?.id) {
-    const projectName = name?.trim() || path.basename(path.resolve(root));
-    db.prepare(
-      "INSERT INTO projects(name, root, prefs_json) VALUES (?, ?, ?)"
-    ).run(projectName, root, JSON.stringify({ whitelist: ["src", "packages"] }));
+  if (!row) {
+    const info = db
+      .prepare("INSERT INTO projects(root, name, prefs_json) VALUES(?,?,?)")
+      .run(normRoot, name || null, null);
+    const id = Number(info.lastInsertRowid);
+    row = { id, root: normRoot, name: name || null, prefs_json: null } as unknown as ProjectRow;
+  } else if (name && row.name !== name) {
+    db.prepare("UPDATE projects SET name=? WHERE id=?").run(name, (row as any).id);
+    row = { ...(row as any), name } as ProjectRow;
   }
 
-  project = db
-    .prepare<ProjectRow>("SELECT id, name, root, prefs_json FROM projects WHERE root = ?")
-    .get(root) as ProjectRow;
-
-  return { db, project };
-}
-
-export function setWhitelist(db: DB, projectId: number, whitelist: string[]): void {
-  const proj = db
-    .prepare<ProjectRow>("SELECT id, name, root, prefs_json FROM projects WHERE id = ?")
-    .get(projectId) as ProjectRow;
-  const prefs: ProjectPrefs = proj?.prefs_json ? JSON.parse(proj.prefs_json) : {};
-  prefs.whitelist = whitelist;
-  db.prepare("UPDATE projects SET prefs_json = ? WHERE id = ?")
-    .run(JSON.stringify(prefs), projectId);
+  return { db, project: row };
 }
 
 export function upsertFile(
   db: DB,
   projectId: number,
+  projectRoot: string,
   filePath: string,
-  lang?: string
+  lang: string | null,
+  hash: string
 ): number {
-  const stat = fs.statSync(filePath);
-  const rel = path.relative(projectRoot(db, projectId), filePath).replace(/\\/g, "/");
-  const existing = db
-    .prepare<{ id: number }>(
-      "SELECT id FROM files WHERE project_id = ? AND path = ?"
-    )
-    .get(projectId, rel) as { id?: number } | undefined;
+  const rel = path.relative(projectRoot, filePath).replace(/\\/g, "/");
 
-  const hash = `${stat.size}-${stat.mtimeMs}`;
+  const stat = fs.statSync(filePath);
+  const existing = db
+    .prepare<{ id: number; hash: string; size: number; mtime: number }>(
+      "SELECT id, hash, size, mtime FROM files WHERE project_id = ? AND path = ?"
+    )
+    .get(projectId, rel) as { id?: number; hash?: string; size?: number; mtime?: number } | undefined;
 
   if (existing?.id) {
-    db.prepare(
-      "UPDATE files SET lang=?, hash=?, size=?, mtime=? WHERE id=?"
-    ).run(lang || null, hash, stat.size, Math.floor(stat.mtimeMs), existing.id);
+    if (
+      existing.hash !== hash ||
+      existing.size !== stat.size ||
+      existing.mtime !== Math.floor(stat.mtimeMs)
+    ) {
+      db.prepare("UPDATE files SET lang=?, hash=?, size=?, mtime=? WHERE id = ?").run(
+        lang || null,
+        hash,
+        stat.size,
+        Math.floor(stat.mtimeMs),
+        existing.id
+      );
+    }
     return existing.id;
   }
 
@@ -88,4 +135,26 @@ export function projectRoot(db: DB, projectId: number): string {
     .prepare<{ root: string }>("SELECT root FROM projects WHERE id = ?")
     .get(projectId) as { root: string };
   return row.root;
+}
+
+/**
+ * Salva a whitelist do projeto em projects.prefs_json (chave: "whitelist").
+ * Aceita padrões glob/relativos ao root. Remove duplicados e ordena.
+ */
+export function setWhitelist(db: DB, projectId: number, patterns: string[]): void {
+  const row =
+    (db
+      .prepare<{ prefs_json: string | null }>("SELECT prefs_json FROM projects WHERE id = ?")
+      .get(projectId) as { prefs_json: string | null }) || { prefs_json: null };
+
+  const prefs: ProjectPrefs | Record<string, any> = row.prefs_json
+    ? JSON.parse(row.prefs_json)
+    : {};
+
+  const clean = Array.from(new Set((patterns || []).map((s) => String(s).trim()).filter(Boolean))).sort();
+  (prefs as any).whitelist = clean;
+
+  db
+    .prepare("UPDATE projects SET prefs_json = ?, updated_at = strftime('%s','now') WHERE id = ?")
+    .run(JSON.stringify(prefs), projectId);
 }
