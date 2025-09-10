@@ -32,42 +32,26 @@ async function importFirst(cands, asFile = true) {
 /** Resolve dependências do core para uso com o Kernel (sem servidor). */
 export async function wireKernelDeps() {
     const root = repoRoot();
-    const dist = path.join(root, "packages", "core", "dist");
-    const projMod = await importFirst([
-        path.join(dist, "services", "ProjectRegistry.js"),
-        path.join(dist, "src", "services", "ProjectRegistry.js"),
-        path.join(dist, "cjs", "services", "ProjectRegistry.js"),
-        path.join(dist, "esm", "services", "ProjectRegistry.js"),
-    ]);
-    const kbMod = await importFirst([
-        path.join(dist, "services", "KBLocal.js"),
-        path.join(dist, "src", "services", "KBLocal.js"),
-        path.join(dist, "cjs", "services", "KBLocal.js"),
-        path.join(dist, "esm", "services", "KBLocal.js"),
-    ]);
-    const rMod = await importFirst([
-        path.join(dist, "services", "Retriever.js"),
-        path.join(dist, "src", "services", "Retriever.js"),
-        path.join(dist, "cjs", "services", "Retriever.js"),
-        path.join(dist, "esm", "services", "Retriever.js"),
-    ]);
-    if (!projMod.openOrCreateProject)
+    const coreEntry = path.join(root, "packages", "core", "dist", "index.js");
+    const core = await importFirst([coreEntry]);
+    const { openOrCreateProject, upsertFile, projectRoot, insertChunk, upsertEmbeddingForChunk, bm25, vector, hybrid, } = core;
+    if (typeof openOrCreateProject !== "function")
         throw new Error("openOrCreateProject not found");
-    if (!projMod.upsertFile)
+    if (typeof upsertFile !== "function")
         throw new Error("upsertFile not found");
-    if (!kbMod.insertChunk)
+    if (typeof insertChunk !== "function")
         throw new Error("insertChunk not found");
-    if (!rMod.bm25 || !rMod.vector || !rMod.hybrid)
+    if (typeof bm25 !== "function" || typeof vector !== "function" || typeof hybrid !== "function")
         throw new Error("Retriever methods not found");
     const deps = {
-        openOrCreateProject: projMod.openOrCreateProject,
-        upsertFile: projMod.upsertFile,
-        insertChunk: kbMod.insertChunk,
-        upsertEmbeddingForChunk: typeof kbMod.upsertEmbeddingForChunk === "function" ? kbMod.upsertEmbeddingForChunk : undefined,
-        bm25: rMod.bm25,
-        vector: rMod.vector,
-        hybrid: rMod.hybrid,
-        projectRoot: typeof projMod.projectRoot === "function" ? projMod.projectRoot : undefined,
+        openOrCreateProject,
+        upsertFile,
+        insertChunk,
+        upsertEmbeddingForChunk: typeof upsertEmbeddingForChunk === "function" ? upsertEmbeddingForChunk : undefined,
+        bm25,
+        vector,
+        hybrid,
+        projectRoot: typeof projectRoot === "function" ? projectRoot : undefined,
     };
     return deps;
 }
