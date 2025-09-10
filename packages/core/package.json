@@ -9,8 +9,12 @@
       "import": "./dist/index.js"
     }
   },
-  "scripts": {
-    "build": "tsup --config tsup.config.ts"
+  "scripts": 
+  {
+  "build": "tsup --config tsup.config.ts",
+  "typecheck": "tsc -p tsconfig.json --noEmit",
+  "lint": "eslint . --ext .ts,.tsx,.js,.mjs",
+  "format": "prettier --check ."
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",

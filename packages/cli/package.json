@@ -2,9 +2,13 @@
   "name": "@lsc/cli-nobin",
   "version": "0.1.0",
   "type": "module",
-  "scripts": {
-    "build": "tsup src/index.ts --format esm",
-    "dev": "tsup src/index.ts --watch"
+  "scripts": 
+  {
+  "build": "tsup src/index.ts --format esm",
+  "dev": "tsup src/index.ts --watch",
+  "typecheck": "tsc -p tsconfig.json --noEmit",
+  "lint": "eslint . --ext .ts,.tsx,.js,.mjs",
+  "format": "prettier --check ."
   },
   "dependencies": {
     "@lsc/core": "file:../core",

@@ -1,4 +1,5 @@
-﻿{
+// packages/cli/tsconfig.json
+{
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
@@ -8,7 +9,11 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@lsc/core": ["../core/src"]
+    }
   },
   "include": ["src"]
 }
