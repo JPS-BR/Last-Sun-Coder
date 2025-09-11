@@ -1,6 +1,7 @@
 // packages/core/src/services/KBLocal.ts
 import { DB } from "./DB.js";
 import * as crypto from "node:crypto";
+import type { UnknownRecord } from "../types";
 
 export type InsertedChunk = {
   id: number;
@@ -71,7 +72,9 @@ export function insertChunk(
     )
     .run(projectId, fileId || null, path, lang || null, start_line, end_line, content, md5);
 
-  return { id: Number(info.lastInsertRowid), start_line, end_line, path };
+  // info can be unknown from DB; cast carefully
+  const lastId = (info as any)?.lastInsertRowid ?? (info as UnknownRecord)?.lastInsertRowid ?? undefined;
+  return { id: Number(lastId), start_line, end_line, path };
 }
 
 // Placeholder de embedding local (trocar depois por @xenova/transformers)
