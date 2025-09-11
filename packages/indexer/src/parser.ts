@@ -3,11 +3,12 @@ import Parser = require("tree-sitter");
 
 export interface TSNode { type: string; startIndex?: number; endIndex?: number; [k: string]: unknown }
 
-export function isNode(v: unknown): v is TSNode { return typeof v === 'object' && v !== null && typeof (v as any).type === 'string'; }
+export function isNode(v: unknown): v is TSNode { return typeof v === 'object' && v !== null && typeof (v as { type?: unknown }).type === 'string'; }
 
-const tsLangs: unknown = require("tree-sitter-typescript");
-const TS: unknown = (tsLangs as any)?.typescript ?? (tsLangs as any)?.TypeScript;
-const TSX: unknown = (tsLangs as any)?.tsx ?? (tsLangs as any)?.TSX;
+const tsLangsRaw: unknown = require("tree-sitter-typescript");
+const tsLangsObj = typeof tsLangsRaw === 'object' && tsLangsRaw !== null ? (tsLangsRaw as Record<string, unknown>) : {};
+const TS: unknown = tsLangsObj.typescript ?? tsLangsObj.TypeScript;
+const TSX: unknown = tsLangsObj.tsx ?? tsLangsObj.TSX;
 
 /**
  * Cria um parser do Tree-sitter para TypeScript ou TSX.
@@ -15,7 +16,10 @@ const TSX: unknown = (tsLangs as any)?.tsx ?? (tsLangs as any)?.TSX;
  */
 export function makeParser(useTsx = false) {
   const p = new Parser();
-  p.setLanguage((useTsx ? TSX : TS) as any);
+  const lang = useTsx ? TSX : TS;
+  // p.setLanguage expects the language object from the native binding; runtime shape only. Disable eslint for this specific cast.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Tree-sitter language object is native/untyped at runtime
+  p.setLanguage(lang as any);
   return p;
 }
 

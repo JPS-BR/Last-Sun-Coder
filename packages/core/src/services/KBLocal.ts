@@ -2,6 +2,7 @@
 import { DB } from "./DB.js";
 import * as crypto from "node:crypto";
 import type { UnknownRecord } from "../types";
+import type { RunResult } from "better-sqlite3";
 
 export type InsertedChunk = {
   id: number;
@@ -72,8 +73,12 @@ export function insertChunk(
     )
     .run(projectId, fileId || null, path, lang || null, start_line, end_line, content, md5);
 
-  const lastIdRaw = (info as unknown) && (info as any).lastInsertRowid ? (info as any).lastInsertRowid : (info as UnknownRecord)?.lastInsertRowid;
-  const lastId = lastIdRaw !== undefined ? Number(lastIdRaw) : NaN;
+  const infoRun = info as RunResult | UnknownRecord | undefined;
+  const lastIdRaw =
+    infoRun && typeof (infoRun as RunResult).lastInsertRowid !== "undefined"
+      ? (infoRun as RunResult).lastInsertRowid
+      : (infoRun as UnknownRecord)?.lastInsertRowid;
+  const lastId = typeof lastIdRaw === "number" ? lastIdRaw : Number(lastIdRaw);
   return { id: lastId, start_line, end_line, path };
 }
 
