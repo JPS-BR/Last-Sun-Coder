@@ -4,7 +4,7 @@ import * as crypto from "node:crypto";
 
 type Logger = (msg: string) => void;
 
-/** DependÃªncias trazidas do core/indexer via DI (nada de import cruzado). */
+/** DependÃƒÂªncias trazidas do core/indexer via DI (nada de import cruzado). */
 export interface KernelDeps {
   openOrCreateProject: (root: string, name?: string) => {
     db: any;
@@ -33,7 +33,7 @@ export interface KernelDeps {
 
   upsertEmbeddingForChunk?: (db: any, chunkId: number, text: string) => Promise<void>;
 
-  // Retriever (somente chamadas, implementaÃ§Ã£o fica no core)
+  // Retriever (somente chamadas, implementaÃƒÂ§ÃƒÂ£o fica no core)
   bm25: (db: any, projectId: number, query: string, k?: number) => Retrieved[];
   vector: (db: any, queryVec: Float32Array, queryNorm: number, k?: number) => Retrieved[];
   hybrid: (
@@ -49,16 +49,16 @@ export interface KernelDeps {
   projectRoot?: (db: any, projectId: number) => string;
 }
 
-/** OpÃ§Ãµes do Kernel (em processo, sem servidor). */
+/** OpÃƒÂ§ÃƒÂµes do Kernel (em processo, sem servidor). */
 export interface KernelOptions {
   root: string;
   name?: string;
   logger?: Logger;
 
-  // IndexaÃ§Ã£o
-  chunkLines?: number;        // padrÃ£o: 120
-  exts?: string[];            // padrÃ£o: ts,tsx,js,jsx,mjs,cjs,json,md,sql
-  ignoreDirs?: string[];      // padrÃ£o: node_modules,.git,.lastsun,dist,build
+  // IndexaÃƒÂ§ÃƒÂ£o
+  chunkLines?: number;        // padrÃƒÂ£o: 120
+  exts?: string[];            // padrÃƒÂ£o: ts,tsx,js,jsx,mjs,cjs,json,md,sql
+  ignoreDirs?: string[];      // padrÃƒÂ£o: node_modules,.git,.lastsun,dist,build
   strict?: boolean;           // aguarda embeddings e exige dep
 }
 
@@ -87,7 +87,7 @@ export interface Kernel {
   searchHybrid: (textQuery: string, queryVec: Float32Array, norm: number, k?: number) => Retrieved[];
 }
 
-/* --------- utils locais (sem dependÃªncias externas) ---------- */
+/* --------- utils locais (sem dependÃƒÂªncias externas) ---------- */
 
 function detectLangByExt(file: string): string | null {
   const ext = path.extname(file).toLowerCase();
@@ -174,7 +174,7 @@ export async function createKernel(opts: KernelOptions, deps: KernelDeps): Promi
     ignoreDirs?: string[];
     strict?: boolean;
   }): Promise<{ files: number; chunks: number }> {
-    const chosenExts = Array.isArray(local) && false ? defaultExts : (local && Array.isArray(local.exts) ? local.exts : defaultExts);
+    const chosenExts = (local && Array.isArray(local.exts) ? local.exts : defaultExts);
     const chosenIgnore = local && Array.isArray(local.ignoreDirs) ? local.ignoreDirs : defaultIgnore;
     const chosenChunkLines = local && typeof local.chunkLines === "number" && isFinite(local.chunkLines)
       ? Math.max(20, Math.min(400, local.chunkLines))
@@ -210,7 +210,7 @@ export async function createKernel(opts: KernelOptions, deps: KernelDeps): Promi
           if (useStrict) {
             await deps.upsertEmbeddingForChunk(db, ins.id, text);
           } else {
-            // nÃ£o bloqueia em modo normal
+            // nÃƒÂ£o bloqueia em modo normal
              
             deps.upsertEmbeddingForChunk(db, ins.id, text);
           }
