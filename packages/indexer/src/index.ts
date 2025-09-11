@@ -6,7 +6,7 @@ export interface IndexerDeps {
   openOrCreateProject: (root: string, name?: string) =>
     { db: unknown; project: { id: number; root: string } };
   upsertFile: (
-    db: any,
+    db: unknown,
     projectId: number,
     projectRoot: string,
     filePath: string,
@@ -14,7 +14,7 @@ export interface IndexerDeps {
     hash: string
   ) => number;
   insertChunk: (
-    db: any,
+    db: unknown,
     projectId: number,
     fileId: number | null,
     relPath: string,
@@ -23,8 +23,8 @@ export interface IndexerDeps {
     endLine: number,
     content: string
   ) => { id: number; start_line: number; end_line: number; path: string };
-  upsertEmbeddingForChunk?: (db: any, chunkId: number, text: string) => Promise<void>;
-  runMigrations?: (db: any) => Promise<void> | void;
+  upsertEmbeddingForChunk?: (db: unknown, chunkId: number, text: string) => Promise<void>;
+  runMigrations?: (db: unknown) => Promise<void> | void;
 }
 
 export interface IndexOptions {

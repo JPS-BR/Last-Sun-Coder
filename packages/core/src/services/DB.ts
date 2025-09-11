@@ -32,15 +32,18 @@ export class DB {
   }
 
   run(sql: string, ...params: unknown[]): void {
-    this.db.prepare(sql).run(...(params as any));
+    const stmt = this.db.prepare(sql) as unknown as { run: (...args: unknown[]) => unknown };
+    stmt.run(...params);
   }
 
   get<T = UnknownRecord>(sql: string, ...params: unknown[]): T {
-    return this.db.prepare(sql).get(...(params as any)) as T;
+    const stmt = this.db.prepare(sql) as unknown as { get: (...args: unknown[]) => unknown };
+    return stmt.get(...params) as T;
   }
 
   all<T = UnknownRecord>(sql: string, ...params: unknown[]): T[] {
-    return this.db.prepare(sql).all(...(params as any)) as T[];
+    const stmt = this.db.prepare(sql) as unknown as { all: (...args: unknown[]) => unknown[] };
+    return stmt.all(...params) as T[];
   }
 
   exec(sql: string): void {

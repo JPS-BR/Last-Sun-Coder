@@ -72,9 +72,9 @@ export function insertChunk(
     )
     .run(projectId, fileId || null, path, lang || null, start_line, end_line, content, md5);
 
-  // info can be unknown from DB; cast carefully
-  const lastId = (info as any)?.lastInsertRowid ?? (info as UnknownRecord)?.lastInsertRowid ?? undefined;
-  return { id: Number(lastId), start_line, end_line, path };
+  const lastIdRaw = (info as unknown) && (info as any).lastInsertRowid ? (info as any).lastInsertRowid : (info as UnknownRecord)?.lastInsertRowid;
+  const lastId = lastIdRaw !== undefined ? Number(lastIdRaw) : NaN;
+  return { id: lastId, start_line, end_line, path };
 }
 
 // Placeholder de embedding local (trocar depois por @xenova/transformers)

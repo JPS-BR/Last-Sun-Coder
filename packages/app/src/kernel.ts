@@ -7,12 +7,12 @@ type Logger = (msg: string) => void;
 /** DependÃƒÆ’Ã‚Âªncias trazidas do core/indexer via DI (nada de import cruzado). */
 export interface KernelDeps {
   openOrCreateProject: (root: string, name?: string) => {
-    db: any;
+    db: unknown;
     project: { id: number; root: string };
   };
 
   upsertFile: (
-    db: any,
+    db: unknown,
     projectId: number,
     projectRoot: string,
     filePath: string,
@@ -21,7 +21,7 @@ export interface KernelDeps {
   ) => number;
 
   insertChunk: (
-    db: any,
+    db: unknown,
     projectId: number,
     fileId: number | null,
     relPath: string,
@@ -31,13 +31,13 @@ export interface KernelDeps {
     content: string
   ) => { id: number; start_line: number; end_line: number; path: string };
 
-  upsertEmbeddingForChunk?: (db: any, chunkId: number, text: string) => Promise<void>;
+  upsertEmbeddingForChunk?: (db: unknown, chunkId: number, text: string) => Promise<void>;
 
   // Retriever (somente chamadas, implementaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o fica no core)
-  bm25: (db: any, projectId: number, query: string, k?: number) => Retrieved[];
-  vector: (db: any, queryVec: Float32Array, queryNorm: number, k?: number) => Retrieved[];
+  bm25: (db: unknown, projectId: number, query: string, k?: number) => Retrieved[];
+  vector: (db: unknown, queryVec: Float32Array, queryNorm: number, k?: number) => Retrieved[];
   hybrid: (
-    db: any,
+    db: unknown,
     projectId: number,
     textQuery: string,
     queryVec: Float32Array,
@@ -46,7 +46,7 @@ export interface KernelDeps {
   ) => Retrieved[];
 
   // util opcional
-  projectRoot?: (db: any, projectId: number) => string;
+  projectRoot?: (db: unknown, projectId: number) => string;
 }
 
 /** OpÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do Kernel (em processo, sem servidor). */
