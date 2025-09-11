@@ -2,6 +2,7 @@
   "name": "@lsc/hud",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -12,7 +13,10 @@
     "format": "prettier --check ."
   },
   "dependencies": {
-    "@lsc/core": "file:../core",
-    "@lsc/server": "file:../server"
+    "@lsc/core": "file:../core"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.13",
+    "undici-types": "^6.19.8"
   }
 }

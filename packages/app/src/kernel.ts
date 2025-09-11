@@ -4,15 +4,15 @@ import * as crypto from "node:crypto";
 
 type Logger = (msg: string) => void;
 
-/** Dependências trazidas do core/indexer via DI (nada de import cruzado). */
+/** DependÃƒÆ’Ã‚Âªncias trazidas do core/indexer via DI (nada de import cruzado). */
 export interface KernelDeps {
   openOrCreateProject: (root: string, name?: string) => {
-    db: any;
+    db: unknown;
     project: { id: number; root: string };
   };
 
   upsertFile: (
-    db: any,
+    db: unknown,
     projectId: number,
     projectRoot: string,
     filePath: string,
@@ -21,7 +21,7 @@ export interface KernelDeps {
   ) => number;
 
   insertChunk: (
-    db: any,
+    db: unknown,
     projectId: number,
     fileId: number | null,
     relPath: string,
@@ -31,13 +31,13 @@ export interface KernelDeps {
     content: string
   ) => { id: number; start_line: number; end_line: number; path: string };
 
-  upsertEmbeddingForChunk?: (db: any, chunkId: number, text: string) => Promise<void>;
+  upsertEmbeddingForChunk?: (db: unknown, chunkId: number, text: string) => Promise<void>;
 
-  // Retriever (somente chamadas, implementação fica no core)
-  bm25: (db: any, projectId: number, query: string, k?: number) => Retrieved[];
-  vector: (db: any, queryVec: Float32Array, queryNorm: number, k?: number) => Retrieved[];
+  // Retriever (somente chamadas, implementaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o fica no core)
+  bm25: (db: unknown, projectId: number, query: string, k?: number) => Retrieved[];
+  vector: (db: unknown, queryVec: Float32Array, queryNorm: number, k?: number) => Retrieved[];
   hybrid: (
-    db: any,
+    db: unknown,
     projectId: number,
     textQuery: string,
     queryVec: Float32Array,
@@ -46,19 +46,19 @@ export interface KernelDeps {
   ) => Retrieved[];
 
   // util opcional
-  projectRoot?: (db: any, projectId: number) => string;
+  projectRoot?: (db: unknown, projectId: number) => string;
 }
 
-/** Opções do Kernel (em processo, sem servidor). */
+/** OpÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do Kernel (em processo, sem servidor). */
 export interface KernelOptions {
   root: string;
   name?: string;
   logger?: Logger;
 
-  // Indexação
-  chunkLines?: number;        // padrão: 120
-  exts?: string[];            // padrão: ts,tsx,js,jsx,mjs,cjs,json,md,sql
-  ignoreDirs?: string[];      // padrão: node_modules,.git,.lastsun,dist,build
+  // IndexaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
+  chunkLines?: number;        // padrÃƒÆ’Ã‚Â£o: 120
+  exts?: string[];            // padrÃƒÆ’Ã‚Â£o: ts,tsx,js,jsx,mjs,cjs,json,md,sql
+  ignoreDirs?: string[];      // padrÃƒÆ’Ã‚Â£o: node_modules,.git,.lastsun,dist,build
   strict?: boolean;           // aguarda embeddings e exige dep
 }
 
@@ -87,7 +87,7 @@ export interface Kernel {
   searchHybrid: (textQuery: string, queryVec: Float32Array, norm: number, k?: number) => Retrieved[];
 }
 
-/* --------- utils locais (sem dependências externas) ---------- */
+/* --------- utils locais (sem dependÃƒÆ’Ã‚Âªncias externas) ---------- */
 
 function detectLangByExt(file: string): string | null {
   const ext = path.extname(file).toLowerCase();
@@ -174,7 +174,7 @@ export async function createKernel(opts: KernelOptions, deps: KernelDeps): Promi
     ignoreDirs?: string[];
     strict?: boolean;
   }): Promise<{ files: number; chunks: number }> {
-    const chosenExts = Array.isArray(local) && false ? defaultExts : (local && Array.isArray(local.exts) ? local.exts : defaultExts);
+    const chosenExts = (local && Array.isArray(local.exts) ? local.exts : defaultExts);
     const chosenIgnore = local && Array.isArray(local.ignoreDirs) ? local.ignoreDirs : defaultIgnore;
     const chosenChunkLines = local && typeof local.chunkLines === "number" && isFinite(local.chunkLines)
       ? Math.max(20, Math.min(400, local.chunkLines))
@@ -210,8 +210,8 @@ export async function createKernel(opts: KernelOptions, deps: KernelDeps): Promi
           if (useStrict) {
             await deps.upsertEmbeddingForChunk(db, ins.id, text);
           } else {
-            // não bloqueia em modo normal
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            // nÃƒÆ’Ã‚Â£o bloqueia em modo normal
+             
             deps.upsertEmbeddingForChunk(db, ins.id, text);
           }
         } else if (useStrict) {

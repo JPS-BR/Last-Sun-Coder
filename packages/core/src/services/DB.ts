@@ -3,11 +3,12 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { applyMigrations } from "./Migrator.js";
+import type { UnknownRecord } from "../types";
 
 export interface Stmt<T = unknown> {
-  run(...args: any[]): any;
-  get(...args: any[]): T;
-  all(...args: any[]): T[];
+  run(...args: unknown[]): unknown;
+  get(...args: unknown[]): T;
+  all(...args: unknown[]): T[];
 }
 
 export class DB {
@@ -26,20 +27,23 @@ export class DB {
     this.db.pragma("foreign_keys = ON");
   }
 
-  prepare<T = any>(sql: string): Stmt<T> {
+  prepare<T = UnknownRecord>(sql: string): Stmt<T> {
     return this.db.prepare(sql) as unknown as Stmt<T>;
   }
 
-  run(sql: string, ...params: any[]): void {
-    this.db.prepare(sql).run(...params);
+  run(sql: string, ...params: unknown[]): void {
+    const stmt = this.db.prepare(sql) as unknown as { run: (...args: unknown[]) => unknown };
+    stmt.run(...params);
   }
 
-  get<T = any>(sql: string, ...params: any[]): T {
-    return this.db.prepare(sql).get(...params) as T;
+  get<T = UnknownRecord>(sql: string, ...params: unknown[]): T {
+    const stmt = this.db.prepare(sql) as unknown as { get: (...args: unknown[]) => unknown };
+    return stmt.get(...params) as T;
   }
 
-  all<T = any>(sql: string, ...params: any[]): T[] {
-    return this.db.prepare(sql).all(...params) as T[];
+  all<T = UnknownRecord>(sql: string, ...params: unknown[]): T[] {
+    const stmt = this.db.prepare(sql) as unknown as { all: (...args: unknown[]) => unknown[] };
+    return stmt.all(...params) as T[];
   }
 
   exec(sql: string): void {

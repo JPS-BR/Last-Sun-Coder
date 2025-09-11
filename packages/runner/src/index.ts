@@ -4,15 +4,18 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
+// type-only imports from built core package
+import type { MigrationDB } from "@lsc/core";
+// type DB = DBType<UnknownRecord>;
 
 type IndexProject = (opts: {
   root: string; name?: string; exts?: string[]; ignoreDirs?: string[]; chunkLines?: number; strict?: boolean; logger?: (m: string) => void;
 }, deps: {
   openOrCreateProject: (root: string, name?: string) => { db: unknown; project: { id: number; root: string } };
-  upsertFile: (db: any, projectId: number, projectRoot: string, filePath: string, lang: string | null, hash: string) => number;
-  insertChunk: (db: any, projectId: number, fileId: number | null, relPath: string, lang: string | null, startLine: number, endLine: number, content: string) => { id: number };
-  upsertEmbeddingForChunk?: (db: any, chunkId: number, text: string) => Promise<void>;
-  runMigrations?: (db: any) => Promise<void> | void; // << ADICIONADO
+  upsertFile: (db: unknown, projectId: number, projectRoot: string, filePath: string, lang: string | null, hash: string) => number;
+  insertChunk: (db: unknown, projectId: number, fileId: number | null, relPath: string, lang: string | null, startLine: number, endLine: number, content: string) => { id: number };
+  upsertEmbeddingForChunk?: (db: unknown, chunkId: number, text: string) => Promise<void>;
+  runMigrations?: (db: unknown) => Promise<void> | void; // << ADICIONADO
 }) => Promise<{ projectId: number; files: number; chunks: number }>;
 
 function hereDir() {
@@ -149,7 +152,7 @@ async function wireCoreDeps() {
     vector,
     hybrid,
     projectRoot: typeof projectRoot === "function" ? projectRoot : undefined,
-  runMigrations: typeof runMigrations === "function" ? (db: any) => runMigrations(db, sqlDir) : undefined,
+    runMigrations: typeof runMigrations === "function" ? (db: unknown) => runMigrations(db as MigrationDB, sqlDir) : undefined,
   };
 }
 async function cmdIndex(flags: Record<string, string | boolean>) {
@@ -169,7 +172,7 @@ async function cmdIndex(flags: Record<string, string | boolean>) {
   const deps = await wireCoreDeps();
 
   const res = await indexProject(
-    { root, name, chunkLines, exts, ignoreDirs, strict, logger: (m) => process.stdout.write(m + "\n") },
+    { root, name, chunkLines, exts, ignoreDirs, strict, logger: (m: string) => process.stdout.write(m + "\n") },
     deps
   );
   process.stdout.write("[runner] indexed project=" + res.projectId + " files=" + res.files + " chunks=" + res.chunks + "\n");
@@ -180,8 +183,9 @@ async function main() {
   if (args.cmd === "index") { await cmdIndex(args.flags); return; }
   printHelp(); process.exitCode = 1;
 }
-main().catch((e) => {
-  const msg = (e && (e as any).message) ? (e as any).message : String(e);
+main().catch((e: unknown) => {
+  let msg = String(e);
+  if (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string') msg = (e as { message: string }).message;
   process.stderr.write("[runner] error: " + msg + "\n");
   process.exit(1);
 });

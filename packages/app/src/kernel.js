@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
 import * as crypto from "node:crypto";
-/* --------- utils locais (sem dependências externas) ---------- */
+/* --------- utils locais (sem dependÃƒÆ’Ã‚Âªncias externas) ---------- */
 function detectLangByExt(file) {
     const ext = path.extname(file).toLowerCase();
     if (!ext)
@@ -75,7 +75,7 @@ export async function createKernel(opts, deps) {
         ? deps.projectRoot
         : (_db, _id) => root;
     async function index(local) {
-        const chosenExts = Array.isArray(local) && false ? defaultExts : (local && Array.isArray(local.exts) ? local.exts : defaultExts);
+        const chosenExts = (local && Array.isArray(local.exts) ? local.exts : defaultExts);
         const chosenIgnore = local && Array.isArray(local.ignoreDirs) ? local.ignoreDirs : defaultIgnore;
         const chosenChunkLines = local && typeof local.chunkLines === "number" && isFinite(local.chunkLines)
             ? Math.max(20, Math.min(400, local.chunkLines))
@@ -106,8 +106,8 @@ export async function createKernel(opts, deps) {
                         await deps.upsertEmbeddingForChunk(db, ins.id, text);
                     }
                     else {
-                        // não bloqueia em modo normal
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        // nÃƒÆ’Ã‚Â£o bloqueia em modo normal
+                         
                         deps.upsertEmbeddingForChunk(db, ins.id, text);
                     }
                 }

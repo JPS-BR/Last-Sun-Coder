@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@types/form-data": "^2.5.0",
-    "@types/node": "^22.7.4",
+    "@types/node": "^20.19.13",
     "typescript": "^5.9.2",
     "undici-types": "^6.19.8"
   }

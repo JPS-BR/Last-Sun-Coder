@@ -12,7 +12,7 @@ export type Retrieved = {
 };
 
 export function bm25(db: DB, projectId: number, query: string, k = 8): Retrieved[] {
-  const rows = db.all<any>(
+  const rows = db.all<{ chunk_id: number; path: string; start_line: number; end_line: number; content: string; score: number }>(
     `
 SELECT c.id as chunk_id, c.path, c.start_line, c.end_line, c.content,
        bm25(kb_chunks_fts) AS score
@@ -28,7 +28,7 @@ LIMIT ?`,
   );
 
   // Em FTS5, menor bm25 é melhor — invertendo p/ "maior é melhor".
-  return rows.map((r: any) => ({
+  return rows.map((r) => ({
     chunk_id: r.chunk_id,
     path: r.path,
     start_line: r.start_line,
@@ -58,35 +58,35 @@ export function vector(db: DB, a: number | Float32Array, b: Float32Array | numbe
   let k = 8;
 
   if (a instanceof Float32Array) {
-    // Assinatura antiga: (db, queryVec, queryNorm, k?)
     projectId = undefined;
     queryVec = a;
     queryNorm = b as number;
     if (typeof c === "number") k = c;
   } else {
-    // Nova: (db, projectId, queryVec, queryNorm, k?)
-    projectId = a;
+    projectId = a as number;
     queryVec = b as Float32Array;
     queryNorm = c as number;
     if (typeof d === "number") k = d;
   }
 
+  type Row = { chunk_id: number; dim?: number; norm: number; vector: Buffer; path: string; start_line: number; end_line: number; content: string };
+
   const rows = projectId != null
-    ? db.all<any>(
+    ? db.all<Row>(
         `SELECT e.chunk_id, e.dim, e.norm, e.vector, c.path, c.start_line, c.end_line, c.content
            FROM kb_embeddings e
            JOIN kb_chunks c ON c.id = e.chunk_id
           WHERE c.project_id = ?`,
         projectId
       )
-    : db.all<any>(
+    : db.all<Row>(
         `SELECT e.chunk_id, e.dim, e.norm, e.vector, c.path, c.start_line, c.end_line, c.content
            FROM kb_embeddings e
            JOIN kb_chunks c ON c.id = e.chunk_id`
       );
 
-  const scored = rows.map((r: any) => {
-    const buf: Buffer = r.vector;
+  const scored = rows.map((r) => {
+    const buf: Buffer = r.vector as unknown as Buffer;
     const vec = new Float32Array(buf.buffer, buf.byteOffset, Math.floor(buf.byteLength / 4));
     const score = cosine(queryVec, vec, queryNorm, r.norm);
     return {

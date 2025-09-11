@@ -1,12 +1,12 @@
-import * as Migrator from "./Migrator";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { DB } from "./DB.js";
 import { ProjectPrefs, ProjectRow } from "../models/types.js";
+import type { Project, UnknownRecord } from "../types";
 
 export type OpenProject = {
   db: DB;
-  project: ProjectRow;
+  project: Project;
 };
 
 function projectDbPath(root: string): string {
@@ -23,7 +23,7 @@ function ensureProjectsTable(db: DB): void {
     db
       .prepare<{ name: string }>("PRAGMA table_info(projects)")
       .all()
-      .map((r: any) => r.name) || [];
+      .map((r) => r.name) || [];
 
   if (cols.length === 0) {
     db.exec(`
@@ -71,7 +71,7 @@ export function openOrCreateProject(root: string, name?: string): OpenProject {
   ensureProjectsTable(db);
   ensureFilesTable(db);
 
-  const normRoot = path.resolve(root).replace(/\\/g, "/");
+  const normRoot = path.resolve(root).replace(/\\\\/g, "/");
   let row = db
     .prepare<ProjectRow>("SELECT id, root, name, prefs_json FROM projects WHERE root = ?")
     .get(normRoot) as ProjectRow | undefined;
@@ -80,14 +80,14 @@ export function openOrCreateProject(root: string, name?: string): OpenProject {
     const info = db
       .prepare("INSERT INTO projects(root, name, prefs_json) VALUES(?,?,?)")
       .run(normRoot, name || null, null);
-    const id = Number(info.lastInsertRowid);
-    row = { id, root: normRoot, name: name || null, prefs_json: null } as unknown as ProjectRow;
+    const id = Number((info as UnknownRecord).lastInsertRowid);
+    row = { id, root: normRoot, name: name || null, prefs_json: null } as ProjectRow;
   } else if (name && row.name !== name) {
-    db.prepare("UPDATE projects SET name=? WHERE id=?").run(name, (row as any).id);
-    row = { ...(row as any), name } as ProjectRow;
+    db.prepare("UPDATE projects SET name=? WHERE id=?").run(name, (row as UnknownRecord).id);
+    row = { ...(row as UnknownRecord), name } as ProjectRow;
   }
 
-  return { db, project: row };
+  return { db, project: row as Project };
 }
 
 export function upsertFile(
@@ -98,7 +98,7 @@ export function upsertFile(
   lang: string | null,
   hash: string
 ): number {
-  const rel = path.relative(projectRoot, filePath).replace(/\\/g, "/");
+  const rel = path.relative(projectRoot, filePath).replace(/\\\\/g, "/");
 
   const stat = fs.statSync(filePath);
   const existing = db
@@ -127,7 +127,7 @@ export function upsertFile(
   const info = db
     .prepare("INSERT INTO files(project_id, path, lang, hash, size, mtime) VALUES(?,?,?,?,?,?)")
     .run(projectId, rel, lang || null, hash, stat.size, Math.floor(stat.mtimeMs));
-  return Number(info.lastInsertRowid);
+  return Number((info as UnknownRecord).lastInsertRowid);
 }
 
 export function projectRoot(db: DB, projectId: number): string {
@@ -147,12 +147,12 @@ export function setWhitelist(db: DB, projectId: number, patterns: string[]): voi
       .prepare<{ prefs_json: string | null }>("SELECT prefs_json FROM projects WHERE id = ?")
       .get(projectId) as { prefs_json: string | null }) || { prefs_json: null };
 
-  const prefs: ProjectPrefs | Record<string, any> = row.prefs_json
+  const prefs: ProjectPrefs | Record<string, unknown> = row.prefs_json
     ? JSON.parse(row.prefs_json)
     : {};
 
   const clean = Array.from(new Set((patterns || []).map((s) => String(s).trim()).filter(Boolean))).sort();
-  (prefs as any).whitelist = clean;
+  (prefs as UnknownRecord).whitelist = clean;
 
   db
     .prepare("UPDATE projects SET prefs_json = ?, updated_at = strftime('%s','now') WHERE id = ?")

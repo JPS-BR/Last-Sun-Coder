@@ -12,7 +12,7 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@lsc/core": ["../core/src"]
+      "@lsc/core": ["../core/dist"]
     }
   },
   "include": ["src"]

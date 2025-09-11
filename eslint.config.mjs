@@ -1,39 +1,37 @@
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
+﻿import tseslint from "typescript-eslint";
 
-export default [
-  { ignores: ["node_modules/**", "**/dist/**", ".lastsun/**", "**/*.d.ts"] },
+// Flat config ESLint 9
+export default tseslint.config(
+  // Ignorar pastas/arquivos
+  {
+    ignores: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/packages/*/tsup.config.ts",
+    ],
+  },
 
-  js.configs.recommended,
+  // Regras recomendadas de TS-ESLint
   ...tseslint.configs.recommended,
 
+  // Overrides para o indexer (CommonJS + require permitido)
   {
-    // regras/opts gerais (ESM)
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: "module",
-      globals: {
-        console: "readonly",
-        process: "readonly"
-      }
-    },
+    files: ["packages/indexer/**/*.{ts,tsx,js,cjs,mjs}"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-require-imports": "off"
     }
   },
 
-  // Se tiver arquivos CommonJS, liberamos os globals só neles
+  // Regras globais (MVP)
   {
-    files: ["**/*.cjs", "**/*.cts"],
-    languageOptions: {
-      globals: {
-        require: "readonly",
-        module: "readonly",
-        exports: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly"
-      }
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }],
+      "@typescript-eslint/no-explicit-any": "warn",        // <- fecha a maioria agora
+      "no-constant-condition": ["error", { "checkLoops": false }],
+      "no-empty": ["error", { "allowEmptyCatch": true }]
     }
   }
-];
+);

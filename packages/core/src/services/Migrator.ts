@@ -1,16 +1,21 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { MigrationDB } from "../types";
 
-export function applyMigrations(db: any, migrationsDir: string): void {
+export function applyMigrations(db: MigrationDB, migrationsDir: string): void {
   if (!fs.existsSync(migrationsDir)) return;
 
   // tabela de controle
   const ensure = "CREATE TABLE IF NOT EXISTS schema_migrations (id TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)";
-  if (typeof db.exec === "function") db.exec(ensure); else db.run(ensure);
+  if (typeof db.exec === "function") db.exec(ensure); else db.run?.(ensure as unknown as string);
 
   const applied = new Set<string>();
-  const q = (db.prepare?.("SELECT id FROM schema_migrations") ?? { all: () => [] });
-  for (const row of q.all()) applied.add(row.id);
+  const q = db.prepare?.("SELECT id FROM schema_migrations");
+  const allFn = q && typeof q.all === 'function' ? q.all : (() => [] as unknown[]);
+  for (const row of allFn()) {
+    const id = (row as any)?.id as string | undefined;
+    if (id) applied.add(id);
+  }
 
   const files = fs.readdirSync(migrationsDir)
     .filter(f => /^\d+_.*\.sql$/i.test(f))
@@ -19,8 +24,8 @@ export function applyMigrations(db: any, migrationsDir: string): void {
   for (const f of files) {
     if (applied.has(f)) continue;
     const sql = fs.readFileSync(path.join(migrationsDir, f), "utf8");
-    if (typeof db.exec === "function") db.exec(sql); else db.run(sql);
+    if (typeof db.exec === "function") db.exec(sql); else db.run?.(sql as unknown as string);
     const stmt = db.prepare?.("INSERT INTO schema_migrations(id, applied_at) VALUES(?, strftime('%s','now'))");
-    if (stmt) stmt.run(f);
+    if (stmt && typeof stmt.run === "function") stmt.run(f as unknown as string);
   }
 }
