@@ -4,7 +4,7 @@ import * as crypto from "node:crypto";
 
 type Logger = (msg: string) => void;
 
-/** DependÃƒÂªncias trazidas do core/indexer via DI (nada de import cruzado). */
+/** DependÃƒÆ’Ã‚Âªncias trazidas do core/indexer via DI (nada de import cruzado). */
 export interface KernelDeps {
   openOrCreateProject: (root: string, name?: string) => {
     db: any;
@@ -33,7 +33,7 @@ export interface KernelDeps {
 
   upsertEmbeddingForChunk?: (db: any, chunkId: number, text: string) => Promise<void>;
 
-  // Retriever (somente chamadas, implementaÃƒÂ§ÃƒÂ£o fica no core)
+  // Retriever (somente chamadas, implementaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o fica no core)
   bm25: (db: any, projectId: number, query: string, k?: number) => Retrieved[];
   vector: (db: any, queryVec: Float32Array, queryNorm: number, k?: number) => Retrieved[];
   hybrid: (
@@ -49,16 +49,16 @@ export interface KernelDeps {
   projectRoot?: (db: any, projectId: number) => string;
 }
 
-/** OpÃƒÂ§ÃƒÂµes do Kernel (em processo, sem servidor). */
+/** OpÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do Kernel (em processo, sem servidor). */
 export interface KernelOptions {
   root: string;
   name?: string;
   logger?: Logger;
 
-  // IndexaÃƒÂ§ÃƒÂ£o
-  chunkLines?: number;        // padrÃƒÂ£o: 120
-  exts?: string[];            // padrÃƒÂ£o: ts,tsx,js,jsx,mjs,cjs,json,md,sql
-  ignoreDirs?: string[];      // padrÃƒÂ£o: node_modules,.git,.lastsun,dist,build
+  // IndexaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
+  chunkLines?: number;        // padrÃƒÆ’Ã‚Â£o: 120
+  exts?: string[];            // padrÃƒÆ’Ã‚Â£o: ts,tsx,js,jsx,mjs,cjs,json,md,sql
+  ignoreDirs?: string[];      // padrÃƒÆ’Ã‚Â£o: node_modules,.git,.lastsun,dist,build
   strict?: boolean;           // aguarda embeddings e exige dep
 }
 
@@ -87,7 +87,7 @@ export interface Kernel {
   searchHybrid: (textQuery: string, queryVec: Float32Array, norm: number, k?: number) => Retrieved[];
 }
 
-/* --------- utils locais (sem dependÃƒÂªncias externas) ---------- */
+/* --------- utils locais (sem dependÃƒÆ’Ã‚Âªncias externas) ---------- */
 
 function detectLangByExt(file: string): string | null {
   const ext = path.extname(file).toLowerCase();
@@ -210,7 +210,7 @@ export async function createKernel(opts: KernelOptions, deps: KernelDeps): Promi
           if (useStrict) {
             await deps.upsertEmbeddingForChunk(db, ins.id, text);
           } else {
-            // nÃƒÂ£o bloqueia em modo normal
+            // nÃƒÆ’Ã‚Â£o bloqueia em modo normal
              
             deps.upsertEmbeddingForChunk(db, ins.id, text);
           }

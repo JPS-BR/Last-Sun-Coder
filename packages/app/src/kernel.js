@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
 import * as crypto from "node:crypto";
-/* --------- utils locais (sem dependÃƒÂªncias externas) ---------- */
+/* --------- utils locais (sem dependÃƒÆ’Ã‚Âªncias externas) ---------- */
 function detectLangByExt(file) {
     const ext = path.extname(file).toLowerCase();
     if (!ext)
@@ -106,7 +106,7 @@ export async function createKernel(opts, deps) {
                         await deps.upsertEmbeddingForChunk(db, ins.id, text);
                     }
                     else {
-                        // nÃƒÂ£o bloqueia em modo normal
+                        // nÃƒÆ’Ã‚Â£o bloqueia em modo normal
                          
                         deps.upsertEmbeddingForChunk(db, ins.id, text);
                     }
