@@ -4,7 +4,7 @@ import * as crypto from "node:crypto";
 
 type Logger = (msg: string) => void;
 
-/** Dependências trazidas do core/indexer via DI (nada de import cruzado). */
+/** DependÃªncias trazidas do core/indexer via DI (nada de import cruzado). */
 export interface KernelDeps {
   openOrCreateProject: (root: string, name?: string) => {
     db: any;
@@ -33,7 +33,7 @@ export interface KernelDeps {
 
   upsertEmbeddingForChunk?: (db: any, chunkId: number, text: string) => Promise<void>;
 
-  // Retriever (somente chamadas, implementação fica no core)
+  // Retriever (somente chamadas, implementaÃ§Ã£o fica no core)
   bm25: (db: any, projectId: number, query: string, k?: number) => Retrieved[];
   vector: (db: any, queryVec: Float32Array, queryNorm: number, k?: number) => Retrieved[];
   hybrid: (
@@ -49,16 +49,16 @@ export interface KernelDeps {
   projectRoot?: (db: any, projectId: number) => string;
 }
 
-/** Opções do Kernel (em processo, sem servidor). */
+/** OpÃ§Ãµes do Kernel (em processo, sem servidor). */
 export interface KernelOptions {
   root: string;
   name?: string;
   logger?: Logger;
 
-  // Indexação
-  chunkLines?: number;        // padrão: 120
-  exts?: string[];            // padrão: ts,tsx,js,jsx,mjs,cjs,json,md,sql
-  ignoreDirs?: string[];      // padrão: node_modules,.git,.lastsun,dist,build
+  // IndexaÃ§Ã£o
+  chunkLines?: number;        // padrÃ£o: 120
+  exts?: string[];            // padrÃ£o: ts,tsx,js,jsx,mjs,cjs,json,md,sql
+  ignoreDirs?: string[];      // padrÃ£o: node_modules,.git,.lastsun,dist,build
   strict?: boolean;           // aguarda embeddings e exige dep
 }
 
@@ -87,7 +87,7 @@ export interface Kernel {
   searchHybrid: (textQuery: string, queryVec: Float32Array, norm: number, k?: number) => Retrieved[];
 }
 
-/* --------- utils locais (sem dependências externas) ---------- */
+/* --------- utils locais (sem dependÃªncias externas) ---------- */
 
 function detectLangByExt(file: string): string | null {
   const ext = path.extname(file).toLowerCase();
@@ -210,8 +210,8 @@ export async function createKernel(opts: KernelOptions, deps: KernelDeps): Promi
           if (useStrict) {
             await deps.upsertEmbeddingForChunk(db, ins.id, text);
           } else {
-            // não bloqueia em modo normal
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            // nÃ£o bloqueia em modo normal
+             
             deps.upsertEmbeddingForChunk(db, ins.id, text);
           }
         } else if (useStrict) {

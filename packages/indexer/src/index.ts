@@ -139,7 +139,7 @@ export async function indexProject(opts: IndexOptions, deps: IndexerDeps) {
         if (strict) {
           await deps.upsertEmbeddingForChunk(db, chunkId, ch.text);
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+           
           deps.upsertEmbeddingForChunk(db, chunkId, ch.text);
         }
       } else if (strict) {
