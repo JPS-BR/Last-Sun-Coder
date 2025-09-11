@@ -1,4 +1,3 @@
-import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -11,7 +10,6 @@ function hereDir() {
   return path.dirname(__filename);
 }
 function repoRoot() { return path.resolve(hereDir(), "..", ".."); }
-function exists(p: string) { try { return fs.existsSync(p); } catch { return false; } }
 async function tryImport(spec: string) { try { return await import(spec); } catch { return null; } }
 async function importFirst(cands: string[], asFile = true) {
   for (const c of cands) {
