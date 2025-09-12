@@ -8,6 +8,7 @@ export * from './types';
 export { openOrCreateProject, upsertFile, projectRoot } from "./services/ProjectRegistry";
 export { insertChunk, upsertEmbeddingForChunk } from "./services/KBLocal";
 export { bm25, vector, hybrid } from "./services/Retriever";
+export { getOpenAIKey, setOpenAIKey, clearOpenAIKey } from "./secrets";
 
 // Ponte para migrações (chama o que existir no Migrator), priorizando <repo>/sql
 import * as Migrator from "./services/Migrator";
