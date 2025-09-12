@@ -177,10 +177,43 @@ async function cmdIndex(flags: Record<string, string | boolean>) {
   );
   process.stdout.write("[runner] indexed project=" + res.projectId + " files=" + res.files + " chunks=" + res.chunks + "\n");
 }
+async function cmdDoctor(flags: Record<string, string | boolean>) {
+  const root = repoRoot();
+  console.log('[doctor] Node:', process.version);
+  try {
+    ensureBuilt('core');
+    const coreEntry = path.join(root, 'packages', 'core', 'dist', 'index.js');
+    const core = await importFirst([coreEntry]);
+
+    console.log('[doctor] @lsc/core exports:', Object.keys(core).join(', '));
+
+    if (typeof core.getOpenAIKey === 'function') {
+      try {
+        const key = await core.getOpenAIKey();
+        if (key) console.log('[doctor] OpenAI key: present'); else console.log('[doctor] OpenAI key: NOT set');
+      } catch (err) {
+        console.log('[doctor] OpenAI key check failed:', String(err));
+      }
+    } else {
+      console.log('[doctor] getOpenAIKey not available in core');
+    }
+
+    if (typeof core.DB === 'function' || typeof core.DB?.constructor === 'function') {
+      console.log('[doctor] DB class: available');
+    } else {
+      console.log('[doctor] DB class: not exported');
+    }
+
+  } catch (e) {
+    console.error('[doctor] error:', e && (e as Error).message ? (e as Error).message : String(e));
+    process.exitCode = 1;
+  }
+}
 async function main() {
   const args = parseArgs(process.argv);
-  if (args.cmd === "help") { printHelp(); return; }
-  if (args.cmd === "index") { await cmdIndex(args.flags); return; }
+  if (args.cmd === 'help') { printHelp(); return; }
+  if (args.cmd === 'index') { await cmdIndex(args.flags); return; }
+  if (args.cmd === 'doctor') { await cmdDoctor(args.flags); return; }
   printHelp(); process.exitCode = 1;
 }
 main().catch((e: unknown) => {

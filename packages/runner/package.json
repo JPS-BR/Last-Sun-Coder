@@ -8,12 +8,13 @@
   "bin": {
     "lsc": "dist/index.js"
   },
-  "scripts": 
+  "scripts":
   {
   "build": "tsc -p tsconfig.json",
   "typecheck": "tsc -p tsconfig.json --noEmit",
   "lint": "eslint . --ext .ts,.tsx,.js,.mjs",
-  "format": "prettier --check ."
+  "format": "prettier --check .",
+  "doctor": "node dist/index.js doctor"
   },
   "dependencies": {
     "@lsc/core": "file:../core",

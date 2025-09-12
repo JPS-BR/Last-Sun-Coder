@@ -6,10 +6,7 @@ type Logger = (msg: string) => void;
 
 /** DependÃƒÆ’Ã‚Âªncias trazidas do core/indexer via DI (nada de import cruzado). */
 export interface KernelDeps {
-  openOrCreateProject: (root: string, name?: string) => {
-    db: unknown;
-    project: { id: number; root: string };
-  };
+  openOrCreateProject: (root: string, name?: string) => { db: unknown; project: ProjectDTO };
 
   upsertFile: (
     db: unknown,
@@ -166,7 +163,7 @@ export async function createKernel(opts: KernelOptions, deps: KernelDeps): Promi
 
   const rootGetter = typeof deps.projectRoot === "function"
     ? deps.projectRoot
-    : (_db: any, _id: number) => root;
+    : (_db: unknown, _id: number) => root;
 
   async function index(local?: {
     chunkLines?: number;
@@ -224,7 +221,7 @@ export async function createKernel(opts: KernelOptions, deps: KernelDeps): Promi
     return { files, chunks };
   }
 
-  const projRoot = rootGetter(db, proj.id);
+  const projRoot = rootGetter(db, proj.id) as string;
 
   return {
     projectId: proj.id,
@@ -248,3 +245,6 @@ export async function createKernel(opts: KernelOptions, deps: KernelDeps): Promi
     },
   };
 }
+
+// Local Project DTO (matches core types) — use local type to avoid name collision with exported namespace
+type ProjectDTO = { id: number; root: string; name?: string | null; prefs_json?: string | null };
